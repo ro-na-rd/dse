@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h2>users Table</h2>
+
+<table id="usersTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Rows will be added here dynamically -->
+    </tbody>
+</table>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    h2, h3 {
+        color: #333;
+        margin-bottom: 20px;
+        margin-top: 20px;
+    }
+    
+    h2 {
+        font-size: 28px;
+    }
+    
+    table {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+        margin-bottom: 30px;
+    }
+    
+    th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        text-align: left;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    tr:hover {
+        background-color: #f0f0f0;
+    }
+    
+    button {
+        padding: 8px 16px;
+        margin: 0 4px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    button[onclick="updateItem"] {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    button[onclick="updateItem"]:hover {
+        background-color: #45a049;
+    }
+    
+    button[onclick="deleteItem"] {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    button[onclick="deleteItem"]:hover {
+        background-color: #da190b;
+    }
+    
+    #itemName {
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 300px;
+        transition: border-color 0.3s ease;
+    }
+    
+    #itemName:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    button[onclick="addItem()"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        height: 2cm;
+    }
+    
+    button[onclick="addItem()"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+</style>
+<h3>Add New user</h3>
+<input type="text" id="userName" placeholder="Enter user name">
+<button onclick="adduser()">Add user</button>
+
+<script>
+    let users = [];
+    let currentId = 1;
+
+    function adduser() {
+        const userName = document.getElementById('userName').value;
+        if (userName) {
+            users.push({ id: currentId++, name: userName });
+            document.getElementById('userName').value = '';
+            renderTable();
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = '';
+        users.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.name}</td>
+                <td>
+                    <button onclick="edituser(${user.id})">UPDATE</button>
+                    <button onclick="deleteuser(${user.id})">DELETE</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function editItem(id) {
+        const user = users.find(i => i.id === id);
+        if (user) {
+            const newName = prompt('Edit users name:', user.name);
+            if (newName) {
+                user.name = newName;
+                renderTable();
+            }
+        }
+    }
+
+    function deleteItem(id) {
+        users = users.filter(i => i.id !== id);
+        renderTable();
+    }
+</script>
+
+</body>
+</html>

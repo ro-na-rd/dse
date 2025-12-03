@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>To-Do List API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #eeeff0 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        #auth, #todos {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+        }
+        h1, h2 {
+            color: #667eea;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .todo {
+            background: #f8f9ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+    </style>
+
+</head>
+<body>
+    <div id="auth">
+        <h2>Register</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <input type="text" id="name" placeholder="Name (for register)">
+        <button onclick="register()">Register</button>
+        <div class="login link-link">
+            <p>I already have an account <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+    
+
+   
+<script>
+    const API_URL = "http://localhost:5000/api";
+    let token = localStorage.getItem("token");
+
+    if (token) {
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("todos").style.display = "block";
+        loadTodos();
+    }
+
+    async function register() {
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const res = await fetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        // if server returns JSON use res.json(); otherwise res.text()
+        try {
+            const data = await res.json();
+            alert(data.message || JSON.stringify(data));
+        } catch {
+            alert(await res.text());
+        }
+    }
+
+    async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.token) {
+            localStorage.setItem("token", data.token);
+            document.getElementById("auth").style.display = "none";
+            document.getElementById("todos").style.display = "block";
+            token = data.token;
+            loadTodos();
+        } else {
+            alert(data.error || data.message);
+        }
+    }
+
+    async function addTodo() {
+        const title = document.getElementById("todoTitle").value;
+        const description = document.getElementById("todoDesc").value;
+
+        await fetch(`${API_URL}/todos`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, description })
+        });
+        document.getElementById("todoTitle").value = "";
+        document.getElementById("todoDesc").value = "";
+        loadTodos();
+    }
+
+    async function loadTodos() {
+        const res = await fetch(`${API_URL}/todos`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!data || !Array.isArray(data.todos)) {
+            // handle older API responses that return array directly
+            const todos = Array.isArray(data) ? data : data.todos || [];
+            renderTodos(todos);
+            return;
+        }
+        renderTodos(data.todos);
+    }
+
+    function renderTodos(todos) {
+        const html = todos.map(todo => `
+            <div class="todo">
+                <h3>${escapeHtml(todo.title)}</h3>
+                <p>${escapeHtml(todo.description || "")}</p>
+                <button onclick="deleteTodo(${todo.id})">Delete</button>
+            </div>
+        `).join("");
+        document.getElementById("todoList").innerHTML = html;
+    }
+
+    async function deleteTodo(id) {
+        await fetch(`${API_URL}/todos/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        loadTodos();
+    }
+
+    // minimal escape to avoid markup injection
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+
+</body>
+</html>

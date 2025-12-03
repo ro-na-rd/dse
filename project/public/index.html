@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>To-Do List API</title>
+    <style>
+        body { font-family: Arial; max-width: 600px; margin: 50px auto; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; width: 300px; margin: 5px; }
+        .todo { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>To-Do List</h1>
+    
+    <div id="auth">
+        <h2>Login/Register</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <input type="text" id="name" placeholder="Name (for register)">
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="todos" style="display:none;">
+        <h2>My To-Dos</h2>
+        <input type="text" id="todoTitle" placeholder="Todo title">
+        <input type="text" id="todoDesc" placeholder="Description">
+        <button onclick="addTodo()">Add Todo</button>
+        <div id="todoList"></div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5000/api";
+        let token = localStorage.getItem("token");
+
+        if (token) {
+            document.getElementById("auth").style.display = "none";
+            document.getElementById("todos").style.display = "block";
+            loadTodos();
+        }
+
+        async function register() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password })
+            });
+            alert(await res.text());
+        }
+
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+                document.getElementById("auth").style.display = "none";
+                document.getElementById("todos").style.display = "block";
+                loadTodos();
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function addTodo() {
+            const title = document.getElementById("todoTitle").value;
+            const description = document.getElementById("todoDesc").value;
+
+            await fetch(`${API_URL}/todos`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ title, description })
+            });
+            document.getElementById("todoTitle").value = "";
+            document.getElementById("todoDesc").value = "";
+            loadTodos();
+        }
+
+        async function loadTodos() {
+            const res = await fetch(`${API_URL}/todos`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const html = data.todos.map(todo => `
+                <div class="todo">
+                    <h3>${todo.title}</h3>
+                    <p>${todo.description}</p>
+                    <button onclick="deleteTodo(${todo.id})">Delete</button>
+                </div>
+            `).join("");
+            document.getElementById("todoList").innerHTML = html;
+        }
+
+        async function deleteTodo(id) {
+            await fetch(`${API_URL}/todos/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            loadTodos();
+        }
+    </script>
+</body>
+</html>
